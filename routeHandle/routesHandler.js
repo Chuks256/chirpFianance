@@ -46,7 +46,7 @@ class routeHandler{
             }
             if(result){
                 //  create session token 
-                let sessionToken=jwt.sign({sessionToken:userData.id},envProcessor.ROUTE_KEY,{expiresIn:"2h"});
+                let sessionToken=jwt.sign({userId:userData.id},envProcessor.ROUTE_KEY,{expiresIn:"2h"});
                 res.status(200).json({msg:"account creation successful", token:sessionToken})
             }
         })
@@ -63,7 +63,7 @@ class routeHandler{
             }
             if(result.length>0){
                   //  create session token 
-                  let sessionToken=jwt.sign({sessionToken:result[0].id},envProcessor.ROUTE_KEY,{expiresIn:"2h"});
+                  let sessionToken=jwt.sign({userId:result[0].id},envProcessor.ROUTE_KEY,{expiresIn:"2h"});
                   res.status(200).json({msg:"account creation successful", token:sessionToken})
             }
             else{
@@ -72,13 +72,13 @@ class routeHandler{
           })
     }
 
-    uploadProfilePics(){
+    // uploadProfilePics(){
 
-    }
+    // }
 
-    editProfile(){
+    // editProfile(){
 
-    }
+    // }
 
     requestToBuyChirp(){
 
@@ -88,8 +88,9 @@ class routeHandler{
 
     }
 
-    gellAllTransaction(){
-
+    gellAllTransaction(req,res){
+        let txProcess=processor.getAllTransaction()
+        res.status(200).json({value:txProcess,status:"TRANSACTION_APPROVED"})
     }
 
     // function to check balance 
@@ -120,8 +121,50 @@ class routeHandler{
 
     }
 
-    transferChirp(){
+    // function for transfer chirp to another wallet 
+    transferChirp(req,res){
 
+        let txParams={
+            sndr:"",
+            rcr:'',
+            amt:req.body.amount,
+            desc:req.body.description,
+            privateKey:""
+        }
+
+        //  get session from sender 
+        let get_session_token=jwt.verify(req.body.sessionToken,envProcessor.ROUTE_KEY)
+
+        //get sender private key with id
+        let dbQuery=`select * from users where id='${get_session_token.userId}'`;
+        let getRecieverPrivateKey=`select * from users where tag_name='${req.body.recieverTagName}'`
+
+        db_handler.query(dbQuery,(err,result)=>{
+          if(err){
+            throw new Error(err)
+          }
+
+          if(result){
+        // define sender private and config tx params for sender
+          let senderPrivateKey=result[0].private_key;
+          txParams.sndr=addrHandler.create_public_addr(senderPrivateKey)
+          txParams.privateKey=addrHandler.create_signing_key(senderPrivateKey);
+          
+          // find reciever;s private key with tag name 
+          db_handler.query(getRecieverPrivateKey,(err,dbresult)=>{
+            if(err){
+                throw new Error(err)
+            }
+            if(dbresult){
+                txParams.rcr=addrHandler.create_public_addr(result[0].private_key);
+                // after all is well : start transaction
+                let tx_process=processor.transferChirp(txParams)                
+                res.status(200).json(tx_process)
+            }
+          })
+        }
+        })
+        
     }
 
 }
