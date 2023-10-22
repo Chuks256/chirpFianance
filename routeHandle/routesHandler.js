@@ -6,6 +6,8 @@ let jwt=require('jsonwebtoken');
 let c=require("crypto")
 let envProcessor=require("../utils/processorEnv")
 let addrHandler=require("../utils/addrModule")
+let ws=require("ws");
+let broadCasterNode=new ws("ws://localhost:5500")
 
 // initialise processor Module class 
 let processor=new processor_handler();
@@ -80,11 +82,35 @@ class routeHandler{
 
     // }
 
-    requestToBuyChirp(){
-
+    
+    // function to initialize buy order from chirp foundation 
+    // before buying chirp or funding wallet: 
+    // there needs to be confirmation from chrip foundation before any buying order can be accepted
+    requestToBuyChirp(req,res){
+    let txParams={
+        addr:"",
+        fiatAmount:req.body.fiatAmount
+    }
+    let get_session_token=jwt.verify(req.body.sessionToken,envProcessor.ROUTE_KEY)
+    let dbQuery=`select * from users where id='${get_session_token.userId}'`;     
+    // run a query to get user private ky 
+    db_handler.query(dbQuery,(err,result)=>{
+        if(err){
+            throw new Error(err)
+        }
+        if(result){
+            let getPublicKey=addrHandler.create_public_addr(result[0].private_key);
+            txParams.addr=getPublicKey;
+            // ask for confirmation for chirp buy order from chirp foundation 
+            broadCasterNode.onopen=()=>{
+                let txData={name:`${result[0].legal_first_name}_${result[0].legal_first_name}`,fiatAmount:txParams.fiatAmount}
+                broadCasterNode.send(JSON.stringify({value:txData,type:"BUY_ORDER_REQUEST"}))
+            }
+        }
+    })
     }
 
-    requestToSellChirp(){
+    requestToSellChirp(req,res){
 
     }
 
@@ -113,13 +139,13 @@ class routeHandler{
     }
 
 
-    lockChirp(){
+    // lockChirp(){
 
-    }
+    // }
 
-    unlockChirp(){
+    // unlockChirp(){
 
-    }
+    // }
 
     // function for transfer chirp to another wallet 
     transferChirp(req,res){
