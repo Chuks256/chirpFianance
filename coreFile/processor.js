@@ -17,7 +17,7 @@ class processorModule{
     }
 
     coldBootStart(){
-        let readTx=this.readTxslogs();
+        let readTx=this.readTxlogs();
         if(readTx=="" || readTx.length==0 || readTx==undefined){
             return this.initializeGenesisBlock();
         }
@@ -43,17 +43,17 @@ class processorModule{
 
     saveTxLogs(tx_data){
         let sanitizedData=JSON.stringify(tx_data,"null",3)
-        return fs.writeFileSync("../dataLog/userLog.chirp",sanitizedData,{encoding:"utf-8"})
+        return fs.writeFileSync("./dataLog/userLog.chirp",sanitizedData,{encoding:"utf-8"})
     }
 
     readTxlogs(){
-        let getTxData=fs.readFileSync("../dataLog/userLog.chirp",{encoding:"utf-8"})
+        let getTxData=fs.readFileSync("./dataLog/userLog.chirp",{encoding:"utf-8"})
         return getTxData
     }
 
     // fucntion get previous hash 
     getPreviousHash(){
-        let getTxData=fs.readFileSync("../dataLog/userLog.chirp",{encoding:"utf-8"})
+        let getTxData=fs.readFileSync("./dataLog/userLog.chirp",{encoding:"utf-8"})
         let sanitize_data=JSON.parse(getTxData);
         return sanitize_data[sanitize_data.length-1].prevhash
     }
@@ -142,19 +142,21 @@ class processorModule{
     //function to exchange fiat for chirp 
     buyChirp(txparams={}){
         let tx_ledger_storage=JSON.parse(this.readTxlogs())
-        if(txparams.addr.length==0){
-            return {errMsg:"you can't leave this fields empty",  statusCode:501}
-        }
-        if(txparams.amt < 1 ){
-            return {errMsg:"you can't buy below the default price of chirp",statusCode:501}
-        }  
-        //  setup transaction params config 
+
+        //  setup transaction config params 
         let tx_params={
             sndr:addrHelperUtil.create_public_addr(processorEvnHelper.PROCESSOR_PRIVATE_KEY),
             rcr:txparams.addr,
             amt:converterUtil.convertToChirp(200,txParams.fiatAmount),
             desc:"bought chirp from processor"
         }
+       
+        if(txparams.addr.length==0){
+            return {errMsg:"you can't leave this fields empty",  statusCode:501}
+        }
+        if(txparams.amt < 1 ){
+            return {errMsg:"you can't buy below the default price of chirp",statusCode:501}
+        }  
         // define transaction class 
         let tx_module=new transaction_module(tx_params)
         let get_signing_key=addrHelperUtil.create_signing_key(processorEvnHelper.PROCESSOR_PRIVATE_KEY)

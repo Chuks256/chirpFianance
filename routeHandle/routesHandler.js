@@ -26,15 +26,14 @@ class routeHandler{
             phoneNo:req.body.phoneNo,
             accountNo:req.body.accountNo,
             bankName:req.body.bankName,
-            tagName:`@${firstName}${generateId.slice(3)}`,
+            tagName:`@${req.body.legalFirstName}${generateId.slice(3)}`,
             privateKey:addrHandler.create_private_key(),
             mail:req.body.email,
             password:c.createHash("sha256").update(req.body.pass).digest().toString("hex"),
             creationTime:new Date().getTime()
         }
 
-
-        // sanitize user data params 
+        // // sanitize user data params 
         if(userData.firstName =="" || userData.lastName==""){
             res.status(501).json({errMsg:"You cannot leave the firstname or lastname field empty"})
         }
@@ -54,17 +53,16 @@ class routeHandler{
         })
     }
 
-    // fucntion to signin user 
+
+    // function to sign in user 
     signin(req,res){
           let encryptPass=c.createHash("sha256").update(req.body.pass).digest().toString("hex") 
-          let db_query=`select * from users where email='${req.body.mail}' and password='${encryptPass}' `;        
-          //run query in database  
+          let db_query=`select * from users where email='${req.body.email}' and password='${encryptPass}' `;          
           db_handler.query(db_query,(err,result)=>{
             if(err){
                 throw new Error(err)
             }
-            if(result.length>0){
-                  //  create session token 
+            if(result.length>0){ 
                   let sessionToken=jwt.sign({userId:result[0].id},envProcessor.ROUTE_KEY,{expiresIn:"2h"});
                   res.status(200).json({msg:"account creation successful", token:sessionToken})
             }
@@ -74,24 +72,31 @@ class routeHandler{
           })
     }
 
-    // uploadProfilePics(){
+    // function for geting user profile 
+    getUserProfile(req,res){
+            let getSessionToken=jwt.verify(req.body.token,envProcessor.ROUTE_KEY);
+        let dbQuery=`select * from users where id='${getSessionToken.userId}'`
 
-    // }
+        db_handler.query(dbQuery,(err,result)=>{
+            if(err){
+                throw new Error(err)
+            }
+            res.status(200).json({value:result,status:"TRANSACTION_APPROVED"})
+        })
+    }
 
-    // editProfile(){
+    // uploadProfilePics(){// }
 
-    // }
+    // editProfile(){// }
 
     
-    // function to initialize buy order from chirp foundation 
-    // before buying chirp or funding wallet: 
     // there needs to be confirmation from chrip foundation before any buying order can be accepted
     requestToBuyChirp(req,res){
     let txParams={
         addr:"",
         fiatAmount:req.body.fiatAmount
     }
-    let get_session_token=jwt.verify(req.body.sessionToken,envProcessor.ROUTE_KEY)
+    let get_session_token=jwt.verify(req.body.token,envProcessor.ROUTE_KEY)
     let dbQuery=`select * from users where id='${get_session_token.userId}'`;     
     // run a query to get user private ky 
     db_handler.query(dbQuery,(err,result)=>{
@@ -102,22 +107,28 @@ class routeHandler{
             let getPublicKey=addrHandler.create_public_addr(result[0].private_key);
             txParams.addr=getPublicKey;
             // ask for confirmation for chirp buy order from chirp foundation 
-            broadCasterNode.onopen=()=>{
-                let txData={name:`${result[0].legal_first_name}_${result[0].legal_first_name}`,fiatAmount:txParams.fiatAmount}
-                broadCasterNode.send(JSON.stringify({value:txData,type:"BUY_ORDER_REQUEST"}))
-            }
+            let txData={name:`${result[0].legal_first_name}_${result[0].legal_first_name}`,fiatAmount:txParams.fiatAmount}
+            broadCasterNode.send(JSON.stringify({value:txData,type:"BUY_ORDER_REQUEST"}))
+            // listen for incoming message 
+            broadCasterNode.on("message",(msg)=>{
+                let sanitizeTxSignal=JSON.parse(msg);
+                if(sanitizeTxSignal.type=="BUY_ORDER_TX_APPROVED"){
+                    console.log("transaction approved")
+                }
+            })
         }
     })
     }
 
-    requestToSellChirp(req,res){
+    // function for selling chirp 
+    requestToSellChirp(req,res){}
 
-    }
-
+    // function for getting all transaction 
     gellAllTransaction(req,res){
         let txProcess=processor.getAllTransaction()
         res.status(200).json({value:txProcess,status:"TRANSACTION_APPROVED"})
     }
+
 
     // function to check balance 
     checkUserBalance(req,res){
@@ -138,18 +149,12 @@ class routeHandler{
         })
     }
 
+    // lockChirp(){// }
 
-    // lockChirp(){
-
-    // }
-
-    // unlockChirp(){
-
-    // }
+    // unlockChirp(){// }
 
     // function for transfer chirp to another wallet 
     transferChirp(req,res){
-
         let txParams={
             sndr:"",
             rcr:'',
@@ -159,7 +164,7 @@ class routeHandler{
         }
 
         //  get session from sender 
-        let get_session_token=jwt.verify(req.body.sessionToken,envProcessor.ROUTE_KEY)
+        let get_session_token=jwt.verify(req.body.token,envProcessor.ROUTE_KEY)
 
         //get sender private key with id
         let dbQuery=`select * from users where id='${get_session_token.userId}'`;
@@ -169,14 +174,13 @@ class routeHandler{
           if(err){
             throw new Error(err)
           }
-
           if(result){
+
         // define sender private and config tx params for sender
           let senderPrivateKey=result[0].private_key;
           txParams.sndr=addrHandler.create_public_addr(senderPrivateKey)
           txParams.privateKey=addrHandler.create_signing_key(senderPrivateKey);
-          
-          // find reciever;s private key with tag name 
+
           db_handler.query(getRecieverPrivateKey,(err,dbresult)=>{
             if(err){
                 throw new Error(err)
@@ -190,7 +194,8 @@ class routeHandler{
           })
         }
         })
-        
     }
-
 }
+
+// export module for external usuage 
+module.exports=routeHandler;
