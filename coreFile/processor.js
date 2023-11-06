@@ -41,11 +41,13 @@ class processorModule{
         this.saveTxLogs(this.tx_ledger_store)
     }
 
+    // fucntion to dsave transaction logs 
     saveTxLogs(tx_data){
         let sanitizedData=JSON.stringify(tx_data,"null",3)
         return fs.writeFileSync("./dataLog/userLog.chirp",sanitizedData,{encoding:"utf-8"})
     }
 
+    // function to read saved logs 
     readTxlogs(){
         let getTxData=fs.readFileSync("./dataLog/userLog.chirp",{encoding:"utf-8"})
         return getTxData
@@ -58,7 +60,7 @@ class processorModule{
         return sanitize_data[sanitize_data.length-1].prevhash
     }
 
-    // function check user balance 
+    // function to check merchant or user balance 
     checkUserBalance(addr=""){
         let getTxData=this.readTxlogs();
         let userBal=0;
@@ -77,6 +79,7 @@ class processorModule{
         return userBal;
     }
 
+    // functio to verify user balance 
     verifyUserBalance(userTxParams){
         let get_user_bal=this.checkUserBalance(userTxParams.sndr);
         if(get_user_bal<userTxParams.amt){
@@ -147,7 +150,7 @@ class processorModule{
         let tx_params={
             sndr:addrHelperUtil.create_public_addr(processorEvnHelper.PROCESSOR_PRIVATE_KEY),
             rcr:txparams.addr,
-            amt:converterUtil.convertToChirp(200,txParams.fiatAmount),
+            amt:converterUtil.convertToChirp(100,txParams.fiatAmount),
             desc:"bought chirp from processor"
         }
        

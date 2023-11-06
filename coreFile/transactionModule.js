@@ -1,4 +1,3 @@
-
 //  import requied modules 
 let ellipticModule=require("elliptic");
 let Ec=new ellipticModule.ec("secp256k1");
@@ -17,7 +16,7 @@ class transaction_module{
         this.checkMateTxParameter();
     }   
 
-    // function to checkmate transaction parameters 
+    // function to validate transaction parameters 
     checkMateTxParameter(){
         if(this.amt==0){
             return {errMsg:"you cannot leave amount parameter empty or void", status:404}
@@ -54,4 +53,5 @@ class transaction_module{
     }
 }
 
+// export module for external usage 
 module.exports=transaction_module;
