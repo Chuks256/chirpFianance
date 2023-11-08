@@ -42,19 +42,21 @@ app.get(`/test/${process.env.API_VERSION}`,(req,res)=>{
     res.status(200).json({msg:"All is well -> friends"})  
 })
 
+// delete routes 
+
 // getter routes 
 app.get(`/${process.env.API_VERSION}/signin`,routeModule.signin)
 app.get(`/${process.env.API_VERSION}/getUserTransaction`,routeModule.getUserTransaction)
 app.get(`/${process.env.API_VERSION}/gellAllProcessorTransaction`,routeModule.gellAllProcessorTransaction)
 app.get(`/${process.env.API_VERSION}/checkBalance`,routeModule.checkUserBalance)
 app.get(`/${process.env.API_VERSION}/getUserProfile`,routeModule.getUserProfile)
-app.gett(`/${process.env.API_VERSION}/adminGetAllTx`,routeModule.adminGetAllTransaction)
+app.get(`/${process.env.API_VERSION}/adminGetAllTx`,routeModule.adminGetAllTransaction)
 
 // post routes 
 app.post(`/${process.env.API_VERSION}/signup`,routeModule.signup)
-app.post(`/${process.env.API_VERSION}/buyChirp`,routeModule.requestToBuyChirp)
-app.post(`/${process.env.API_VERSION}/sellChirp`,routeModule.requestToSellChirp)
-app.post(`/${process.env.API_VERSION}/transferChirp`,routeModule.transferChirp)
+app.post(`/${process.env.API_VERSION}/fundWallet`,routeModule.requestToFundWallet)
+app.post(`/${process.env.API_VERSION}/withdrawlFromWallet`,routeModule.requestToWithDrawlFromWallet)
+app.post(`/${process.env.API_VERSION}/transferFromWallet`,routeModule.transferFromWallet)
 app.post(`/${process.env.API_VERSION}/adminToggleUserTx`,routeModule.adminToggleTransaction)
 
 

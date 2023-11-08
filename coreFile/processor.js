@@ -2,7 +2,6 @@
 require("dotenv").config()
 let block_module=require("./blockModule")
 let transaction_module=require("./transactionModule")
-let converterUtil=require("../utils/converter");
 let addrHelperUtil=require("../utils/addrModule");
 let fs=require("fs")
 let processorEvnHelper=require("../utils/processorEnv")
@@ -10,8 +9,6 @@ let processorEvnHelper=require("../utils/processorEnv")
 // define chirp processor Module 
 class processorModule{
     constructor(){
-        this.symbol="CHIRP"
-        this.tx_charges_rate=0.05; // 10 naira is deducted per conversion rate 
         this.tx_ledger_store=[] 
         this.coldBootStart();
     }
@@ -66,12 +63,12 @@ class processorModule{
         let userBal=0;
         for(let blk of JSON.parse(getTxData)){
             for(let tx of [blk.transaction]){
-                if(addr==tx.sndr){
-                    userBal -=tx.amt 
+                if(addr===tx.sndr){
+                    userBal=userBal-tx.amt 
                 }
                 else{
-                    if(addr==tx.rcr){
-                        userBal =userBal+tx.amt;
+                    if(addr===tx.rcr){
+                        userBal=userBal+tx.amt;
                     }
                 }
             }
@@ -143,65 +140,65 @@ class processorModule{
     }
 
     //function to exchange fiat for chirp 
-    buyChirp(txparams={}){
+    fundWallet(addr,fiatAmount){
         let tx_ledger_storage=JSON.parse(this.readTxlogs())
 
         //  setup transaction config params 
-        let tx_params={
+        let tx_param={
             sndr:addrHelperUtil.create_public_addr(processorEvnHelper.PROCESSOR_PRIVATE_KEY),
-            rcr:txparams.addr,
-            amt:converterUtil.convertToChirp(100,txParams.fiatAmount),
-            desc:"bought chirp from processor"
+            rcr:addr,
+            amt:fiatAmount,
+            desc:"funded wallet"
         }
        
-        if(txparams.addr.length==0){
+        if(addr.length==0){
             return {errMsg:"you can't leave this fields empty",  statusCode:501}
         }
-        if(txparams.amt < 1 ){
-            return {errMsg:"you can't buy below the default price of chirp",statusCode:501}
+        if(fiatAmount < 100 ){
+            return {errMsg:"you can't fund your wallet below 100",statusCode:501}
         }  
         // define transaction class 
-        let tx_module=new transaction_module(tx_params)
+        let tx_module=new transaction_module(tx_param)
         let get_signing_key=addrHelperUtil.create_signing_key(processorEvnHelper.PROCESSOR_PRIVATE_KEY)
         tx_module.signTx(get_signing_key)
         tx_module.verifyTx()
         let blk_module=new block_module(tx_module,this.getPreviousHash())
         tx_ledger_storage.push(blk_module);
         this.saveTxLogs(tx_ledger_storage);
-        return {msg:`${tx_params.amt } chirps purchase successful`, statusCode:200, status:'TRANSACTION_APPROVED'}
+        return {msg:`${tx_param.amt } wallet funded successfully`, statusCode:200, status:'TRANSACTION_APPROVED'}
     }
 
 
     // fucntion to exchange chirp for fiat  
-    sellChirp(txparams={}){
+    cashoutFromWallet(addr,fiatAmount,privateKey){
         let tx_ledger_storage=JSON.parse(this.readTxlogs())
-        if(txparams.addr.length==0){
+        if(addr.length==0){
             return {errMsg:"you can't leave this fields empty",  statusCode:501}
         }
-        if(txparams.amt < 1 ){
-            return {errMsg:"you can't buy below the default price of chirp",statusCode:501}
+        if(fiatAmount < 50 ){
+            return {errMsg:"you can't withdrawl below 50 ",statusCode:501}
         }  
         //  setup transaction params config 
-        let tx_params={
-            sndr:txParams.addr,
+        let tx_param={
+            sndr:addr,
             rcr:addrHelperUtil.create_public_addr(processorEvnHelper.PROCESSOR_PRIVATE_KEY),
-            amt:txParams.amt,
-            desc:"selling chirp for fiat"
+            amt:fiatAmount,
+            desc:"cashout from wallet"
         }
         // define transaction class 
-        let tx_module=new transaction_module(tx_params)
-        let get_signing_key=addrHelperUtil.create_signing_key(txparams.privateKey)
+        let tx_module=new transaction_module(tx_param)
+        let get_signing_key=addrHelperUtil.create_signing_key(privateKey)
         tx_module.signTx(get_signing_key)
         tx_module.verifyTx()
         let blk_module=new block_module(tx_module,this.getPreviousHash())
         tx_ledger_storage.push(blk_module);
         this.saveTxLogs(tx_ledger_storage);
-        return {msg:`${tx_params.amt } chirps sale successful`, statusCode:200, status:'TRANSACTION_APPROVED'}
+        return {msg:`${tx_param.amt } withdrawal from wallet successful`, statusCode:200, status:'TRANSACTION_APPROVED'}
     }
 
 
     //  function to transfer chirp from a to b 
-    transferChirp(txParams={}){
+    transferNote(txParams={}){
         if(this.getLockedTimeFrame(txParams.sndr)==0 || this.getLockedTimeFrame(txParams.sndr) >new Date().getDay()){
             if(this.verifyUserBalance(txParams)==true){
                 return this.startTransfer(txParams)
@@ -226,8 +223,8 @@ class processorModule{
         if(txparams.sndr.length==0 || txparams.rcr.length==0){
             return {errMsg:"you can't leave this fields empty",  statusCode:501}
         }
-        if(txparams.amt < 1 ){
-            return {errMsg:"you can't buy below the default price of chirp",statusCode:501}
+        if(txparams.amt < 50 ){
+            return {errMsg:"you can't transfer blow 50 naira",statusCode:501}
         }
         let tx_module=new transaction_module(txparams)
         let get_signing_key=addrHelperUtil.create_signing_key(txparams.privateKey)
