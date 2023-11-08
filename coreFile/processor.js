@@ -63,20 +63,20 @@ class processorModule{
         let userBal=0;
         for(let blk of JSON.parse(getTxData)){
             for(let tx of [blk.transaction]){
-                if(addr===tx.sndr){
-                    userBal=userBal-tx.amt 
+                if(addr==tx.sndr){
+                    userBal -= tx.amt 
                 }
                 else{
-                    if(addr===tx.rcr){
-                        userBal=userBal+tx.amt;
+                    if(addr==tx.rcr){
+                        userBal =+ tx.amt;
                     }
                 }
             }
         }
-        return userBal;
+        return userBal
     }
 
-    // functio to verify user balance 
+    // function to verify user balance 
     verifyUserBalance(userTxParams){
         let get_user_bal=this.checkUserBalance(userTxParams.sndr);
         if(get_user_bal<userTxParams.amt){
@@ -170,7 +170,7 @@ class processorModule{
 
 
     // fucntion to exchange chirp for fiat  
-    cashoutFromWallet(addr,fiatAmount,privateKey){
+    cashoutFromWallet(addr,fiatAmount=0,privateKey){
         let tx_ledger_storage=JSON.parse(this.readTxlogs())
         if(addr.length==0){
             return {errMsg:"you can't leave this fields empty",  statusCode:501}
@@ -178,13 +178,17 @@ class processorModule{
         if(fiatAmount < 50 ){
             return {errMsg:"you can't withdrawl below 50 ",statusCode:501}
         }  
+
+        let deductedCharges=fiatAmount
+
         //  setup transaction params config 
         let tx_param={
             sndr:addr,
             rcr:addrHelperUtil.create_public_addr(processorEvnHelper.PROCESSOR_PRIVATE_KEY),
-            amt:fiatAmount,
+            amt:deductedCharges+30,
             desc:"cashout from wallet"
         }
+
         // define transaction class 
         let tx_module=new transaction_module(tx_param)
         let get_signing_key=addrHelperUtil.create_signing_key(privateKey)

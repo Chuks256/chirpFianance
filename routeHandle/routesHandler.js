@@ -112,7 +112,7 @@ class routeHandler{
         }
         if(result){
             let txData={id:c.randomBytes(4).toString("hex"),name:`${result[0].legal_first_name}_${result[0].legal_last_name}`,fiatAmount:txParams.fiatAmount}
-            let txQuery=`insert into transaction value('${txData.id}','${get_session_token.userId}','${txData.name}','${txData.fiatAmount}','PENDING','DEPOSIT')`
+            let txQuery=`insert into transaction value('${txData.id}','${get_session_token.userId}','${txData.name}','${txData.fiatAmount}','PENDING','DEPOSIT','','')`
             
             //  database query for inserting transaction 
             db_handler.query(txQuery,(err,result)=>{
@@ -212,10 +212,10 @@ class routeHandler{
                                     }
                                     else{
                                         if(txresult[0].type=="WITHDRAWAL"){
-                                    // then process withdrawal transaction 
+                                    // then process withdrawal transaction
                                     let withdrawlTxParams={
                                         addr:configTxParams.addr,
-                                        fiatAmount:txresult[0].fiatAmount-30
+                                        fiatAmount:txresult[0].fiatAmount
                                     }
                                     let process_tx=processor.cashoutFromWallet(withdrawlTxParams.addr,withdrawlTxParams.fiatAmount,userResult[0].private_key)
                                     if(process_tx){
@@ -225,8 +225,8 @@ class routeHandler{
                                                 throw new Error(err)
                                             }
                                             if(result){
-                                        // if successfuly processed send successfuly message to admin 
-                                        res.status(200).json({msg:"TRANSACTION_SUCCESSFULLY_APPROVED", status:200})
+                                         // if successfuly processed send successfuly message to admin 
+                                           res.status(200).json({msg:"TRANSACTION_SUCCESSFULLY_APPROVED", status:200})
                                             }
                                         })     
                                     }
@@ -236,7 +236,6 @@ class routeHandler{
                             }
                         }
                     })
-
                 }
             }
         })
@@ -287,7 +286,7 @@ class routeHandler{
                 let getPublicAddr=addrHandler.create_public_addr(result[0].private_key);
                 txParams_config.addr=getPublicAddr;
                 // insert into transaction table 
-                let txQuery=`insert into transaction value('${c.randomBytes(4).toString("hex")}','${result[0].id}','${result[0].legal_first_name}_${result[0].legal_last_name}','${txParams_config.amt}','PENDING','WITHDRAWAL')`
+                let txQuery=`insert into transaction value('${c.randomBytes(4).toString("hex")}','${result[0].id}','${result[0].legal_first_name}_${result[0].legal_last_name}','${txParams_config.amt}','PENDING','WITHDRAWAL','${result[0].account_number}','${result[0].bank_name}')`
                 db_handler.query(txQuery,(err,result)=>{
                     if(err){
                         throw new Error(err)
