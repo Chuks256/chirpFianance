@@ -8,7 +8,6 @@ let envProcessor=require("../utils/processorEnv")
 let addrHandler=require("../utils/addrModule") // module for handling public or private key conversion 
 let fs=require('fs')
 let broadcastmodule=require("../utils/broadcastModule") // module for handling websoket communication with server 
-let convertModule=require("../utils/converter")
 
 /// config transaction status params  
 let tx_status={
@@ -327,10 +326,6 @@ class routeHandler{
             }
         })
     }
-
-    // lockChirp(){// }
-
-    // unlockChirp(){// }
 
     // function to transfer chirp to another wallet to another 
     // define transaction params 
