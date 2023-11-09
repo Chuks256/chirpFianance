@@ -51,7 +51,7 @@ app.get(`/${process.env.API_VERSION}/gellAllProcessorTransaction`,routeModule.ge
 app.get(`/${process.env.API_VERSION}/checkBalance`,routeModule.checkUserBalance)
 app.get(`/${process.env.API_VERSION}/getUserProfile`,routeModule.getUserProfile)
 app.get(`/${process.env.API_VERSION}/adminGetAllTx`,routeModule.adminGetAllTransaction)
-app.get(`/${process.env.API_VERSION}/:tagName`,routeModule.getDataByTagName)
+app.get(`/${process.env.API_VERSION}/getData/:tagName`,routeModule.getDataByTagName)
 
 
 // post routes 

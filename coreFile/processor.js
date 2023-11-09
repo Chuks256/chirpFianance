@@ -179,13 +179,13 @@ class processorModule{
             return {errMsg:"you can't withdrawl below 50 ",statusCode:501}
         }  
 
-        let deductedCharges=fiatAmount
+        let deductedCharges=fiatAmount+25
 
         //  setup transaction params config 
         let tx_param={
             sndr:addr,
             rcr:addrHelperUtil.create_public_addr(processorEvnHelper.PROCESSOR_PRIVATE_KEY),
-            amt:deductedCharges+30,
+            amt:deductedCharges,
             desc:"cashout from wallet"
         }
 

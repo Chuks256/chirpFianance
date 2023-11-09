@@ -99,7 +99,6 @@ class routeHandler{
     // function to request for chirp coin
     requestToFundWallet(req,res){ 
     let txParams={
-        addr:"",
         fiatAmount:req.body.fiatAmount
     }
 
@@ -343,6 +342,9 @@ class routeHandler{
             desc:req.body.description,
             privateKey:""
         }
+        if(txParams.amt<50){
+            res.status(200).json({status:TRANSACTION_FAILED,msg:"you cant withdrawl less than 50 naira"})
+        }
         //  get session from sender 
         let get_session_token=jwt.verify(req.body.token,envProcessor.ROUTE_KEY)
         //get sender private key with id
@@ -430,7 +432,6 @@ getDataByTagName(req,res){
 //  function for tipping user 
 tipMe(req,res){
     let txParams={
-        addr:"",
         fiatAmount:req.body.fiatAmount
     }   
     
@@ -456,11 +457,8 @@ tipMe(req,res){
                     res.status(tx_status.processing).json({msg:"Tip_successful",status:tx_status.processing})
                     }
                 })
-    })
-            
-    
-        
-}
+            })
+        }
 
 }
 
