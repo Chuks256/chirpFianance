@@ -414,6 +414,54 @@ class routeHandler{
             }
     })
 }
+
+// general function to get specific data by using tagname
+getDataByTagName(req,res){
+    let getData=req.params.tagName;
+    let dbQuery=`select tag_name, private_key from users where tag_name="${getData}"`;
+    db_handler.query(dbQuery,(err,result)=>{
+        if(err){
+            throw new Error(err)
+        }
+        res.status(200).json(result)
+    })
+}
+
+//  function for tipping user 
+tipMe(req,res){
+    let txParams={
+        addr:"",
+        fiatAmount:req.body.fiatAmount
+    }   
+    
+    let userQuery=`select * from users where tag_name='${req.params.tagName}'`;
+    db_handler.query(userQuery,(err,result)=>{
+        if(err){
+            throw new Error(err)
+        }
+        // define db queries 
+        let txData={id:c.randomBytes(4).toString("hex"),name:`${result[0].legal_first_name}_${result[0].legal_last_name}`,fiatAmount:txParams.fiatAmount}
+        let txQuery=`insert into transaction value('${txData.id}','${result[0].id}','${txData.name}','${txData.fiatAmount}','PENDING','DEPOSIT','','')`
+        //  database query for inserting transaction 
+        db_handler.query(txQuery,(err,result)=>{
+            if(err){
+            throw new Error(err)
+                }
+                if(result){
+                    let getTxStat=fs.readFileSync("./datalog/pendingTxStats.chirp",{encoding:"utf-8"});
+                    let tx_stats_no=JSON.parse(getTxStat);
+                    tx_stats_no.txStats +=1;
+                    broadcastmodule.broadcastData({txStatsNo:tx_stats_no,type:'TX_STATUS_UPDATE'})
+                    fs.writeFileSync("./datalog/pendingTxStats.chirp",JSON.stringify(tx_stats_no))
+                    res.status(tx_status.processing).json({msg:"Tip_successful",status:tx_status.processing})
+                    }
+                })
+    })
+            
+    
+        
+}
+
 }
 
 // export module for external usuage 
